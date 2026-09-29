@@ -9,6 +9,7 @@ try{
   if(path==='/config')return {kakaoKey:''};
   if(path==='/session'){action='session';payload=body}
   else if(path==='/movies'){action='movies';payload={}}
+  else if(path==='/my-quizzes'){action='myQuizzes';payload={}}
   else if(path==='/decoys'){action='decoys';payload=body}
   else if(path==='/quizzes'&&options.method==='POST'){action='create';payload=body}
   else{const match=path.match(/^\/quizzes\/([\w-]+)(?:\/(attempts|ranking))?$/);if(!match)throw Error('요청을 찾을 수 없습니다.');action=match[2]==='attempts'?'attempt':match[2]==='ranking'?'ranking':'quiz';payload={code:match[1],...body}}
