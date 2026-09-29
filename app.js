@@ -4,11 +4,26 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const api=async(path,options={})=>(await window.firebaseBridgeReady)(path,options);
 const post=(path,data)=>api(path,{method:'POST',body:JSON.stringify(data)});
 const text=(selector,value)=>{const el=document.querySelector(selector);if(el)el.textContent=value};
-function show(id){screens.forEach(s=>s.classList.toggle('active',s.id===id));$('quizSticky').style.display=id==='quiz'?'block':'none';window.scrollTo(0,0)}
+function show(id){screens.forEach(s=>s.classList.toggle('active',s.id===id));$('quizSticky').style.display=id==='quiz'?'block':'none';window.scrollTo(0,0);if(id==='login')prefillNickname()}
 function toast(message){const el=$('toast');el.textContent=message;el.style.opacity=1;setTimeout(()=>el.style.opacity=0,3000)}
 function updateAuthUI(state){document.querySelectorAll('.googleAuthStatus').forEach(el=>{el.textContent=state?.isGoogle?`${state.email} 계정으로 로그인했습니다.${state.pendingMerge?' 이전 게스트 문제 연결을 다시 시도해 주세요.':''}`:state?.pendingMerge?'기존 Google 계정이 있습니다. 아래 버튼을 다시 눌러 게스트 문제를 연결하세요.':'게스트로 이용 중이에요. Google 계정을 연결하면 다른 기기에서도 내 문제를 볼 수 있어요.'});document.querySelectorAll('.googleAuthButton').forEach(btn=>{btn.hidden=!!state?.isGoogle&&!state?.pendingMerge;btn.textContent=state?.pendingMerge?(state.isGoogle?'기존 문제 연결 다시 시도':'Google 계정으로 이어서 로그인'):'Google 계정 연결하기'});document.querySelectorAll('.googleSignOutButton').forEach(btn=>btn.hidden=!state?.isGoogle||!!state?.pendingMerge)}
-window.onGuessmindAuthChanged=updateAuthUI;
-async function connectGoogle(btn){if(!window.googleSignIn){toast('로그인을 준비하는 중입니다. 잠시 후 다시 시도해 주세요.');return}btn.disabled=true;btn.textContent='Google 로그인 창을 여는 중…';try{const result=await window.googleSignIn();if(result.needsExisting){toast('이미 사용 중인 Google 계정입니다. 버튼을 한 번 더 눌러 문제를 연결해 주세요.')}else{toast(result.migrated?`Google 로그인 완료 · 기존 문제 ${result.migrated}개 연결`:'Google 계정이 연결됐습니다.');if(document.getElementById('myQuizzes').classList.contains('active'))await openMyQuizzes()}}catch(e){if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;toast(e.code==='auth/unauthorized-domain'?'Firebase 승인된 도메인에 guessmind.eunlab.com을 추가해 주세요.':e.code==='auth/operation-not-allowed'?'Firebase에서 Google 로그인 제공업체를 활성화해 주세요.':e.code==='auth/popup-blocked'?'팝업 차단을 해제하고 다시 시도해 주세요.':e.message||'Google 로그인에 실패했습니다.')}finally{btn.disabled=false;updateAuthUI(window.getGuessmindAuthState?.())}}
+let nicknameAccount='',nicknameRequest=0,autoFilledNickname='';
+async function prefillNickname(){
+ const state=window.getGuessmindAuthState?.();
+ if(!state?.isGoogle)return;
+ const account=state.email,request=++nicknameRequest,previous=$('nickname').value;
+ try{
+  const {nickname}=await api('/profile');
+  if(request!==nicknameRequest||window.getGuessmindAuthState?.().email!==account)return;
+  if(nickname&&$('nickname').value===previous){$('nickname').value=nickname;autoFilledNickname=nickname}
+ }catch(e){console.error('닉네임 불러오기 실패',e)}
+}
+window.onGuessmindAuthChanged=state=>{
+ updateAuthUI(state);
+ if(state?.isGoogle){if(nicknameAccount!==state.email){if(nicknameAccount)$('nickname').value='';nicknameAccount=state.email}prefillNickname()}
+ else if(nicknameAccount){nicknameAccount='';nicknameRequest++;if($('nickname').value===autoFilledNickname)$('nickname').value='';autoFilledNickname=''}
+};
+async function connectGoogle(btn){if(!window.googleSignIn){toast('로그인을 준비하는 중입니다. 잠시 후 다시 시도해 주세요.');return}btn.disabled=true;btn.textContent='Google 로그인 창을 여는 중…';try{const result=await window.googleSignIn();if(result.needsExisting){toast('이미 사용 중인 Google 계정입니다. 버튼을 한 번 더 눌러 문제를 연결해 주세요.')}else{toast(result.migrated?`Google 로그인 완료 · 기존 문제 ${result.migrated}개 연결`:'Google 계정이 연결됐습니다.');await prefillNickname();if(document.getElementById('myQuizzes').classList.contains('active'))await openMyQuizzes()}}catch(e){if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;toast(e.code==='auth/unauthorized-domain'?'Firebase 승인된 도메인에 guessmind.eunlab.com을 추가해 주세요.':e.code==='auth/operation-not-allowed'?'Firebase에서 Google 로그인 제공업체를 활성화해 주세요.':e.code==='auth/popup-blocked'?'팝업 차단을 해제하고 다시 시도해 주세요.':e.message||'Google 로그인에 실패했습니다.')}finally{btn.disabled=false;updateAuthUI(window.getGuessmindAuthState?.())}}
 async function disconnectGoogle(){try{await window.googleSignOut();toast('로그아웃했습니다. 다시 로그인하면 내 문제를 볼 수 있어요.');if(document.getElementById('myQuizzes').classList.contains('active'))await openMyQuizzes()}catch(e){toast(e.message)}}
 function applyOwner(name){document.querySelectorAll('[data-copy]').forEach(el=>{const template=window.PROTOTYPE_COPY[el.dataset.copy];if(template)el.innerHTML=template.replaceAll('{닉네임}',esc(name))});document.querySelector('.avatar').textContent=name.slice(0,1)}
 function makeStarRating(id,initial,onChange){const root=$(id);root.innerHTML=`<div class="star-buttons" role="radiogroup" aria-label="0점부터 10점까지 반개 별점"><button type="button" class="zero-score" data-score="0">0점</button>${Array.from({length:10},(_,i)=>`<button type="button" class="star-half ${i%2?'right':'left'}" data-score="${i+1}" aria-label="${i+1}점"><span>★</span></button>`).join('')}</div><output class="score-label"></output>`;const paint=score=>{root.dataset.value=score;root.querySelectorAll('.star-half').forEach(b=>b.classList.toggle('filled',Number(b.dataset.score)<=score));root.querySelector('output').textContent=`${Number(score).toFixed(1)} / 10`};root.querySelectorAll('[data-score]').forEach(b=>b.onclick=()=>{paint(Number(b.dataset.score));onChange?.(Number(b.dataset.score))});paint(initial)}
