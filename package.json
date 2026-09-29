@@ -1,9 +1,9 @@
 {
-  "name": "guessmind-prototype",
-  "version": "0.1.0",
+  "name": "guessmind",
+  "version": "0.2.0",
   "private": true,
-  "description": "게스마인드 클릭 가능한 프론트엔드 프로토타입",
-  "scripts": {
-    "start": "node server.mjs"
-  }
+  "type": "module",
+  "description": "GuessMind movie taste quiz with Vercel API and Firebase",
+  "engines": {"node": ">=22"},
+  "dependencies": {"firebase-admin": "^13.0.0"}
 }
