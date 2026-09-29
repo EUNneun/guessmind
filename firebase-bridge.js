@@ -10,6 +10,7 @@ try{
   if(path==='/session'){action='session';payload=body}
   else if(path==='/movies'){action='movies';payload={}}
   else if(path==='/my-quizzes'){action='myQuizzes';payload={}}
+  else if(path==='/owner-result'){action='ownerResult';payload=body}
   else if(path==='/merge-anonymous'){action='mergeAnonymous';payload=body}
   else if(path==='/decoys'){action='decoys';payload=body}
   else if(path==='/quizzes'&&options.method==='POST'){action='create';payload=body}
