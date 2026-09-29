@@ -50,6 +50,16 @@ async function dispatch(db,uid,action,payload,origin){
  if(action==='myQuizzes'){const snap=await db.collection('quizzes').where('ownerUid','==',uid).get();const quizzes=snap.docs.map(doc=>{const q=doc.data();return {code:doc.id,owner:q.owner,movies:q.questions.map(item=>item.movie.title),createdAt:q.createdAt?.toDate?.().toISOString()||null,createdAtSeconds:q.createdAt?.seconds||0}}).sort((a,b)=>b.createdAtSeconds-a.createdAtSeconds).map(({createdAtSeconds,...item})=>item);return {quizzes}}
 
  if(action==='session'){const name=nick(payload.nickname);check(!!name,'닉네임은 2~12자로 입력해주세요.');await db.collection('profiles').doc(uid).set({nickname:name,updatedAt:FieldValue.serverTimestamp()},{merge:true});return {nickname:name}}
+ if(action==='mergeAnonymous'){
+  const oldToken=payload.oldToken;check(typeof oldToken==='string'&&oldToken.length<5000,'이전 게스트 인증 정보가 없습니다.');
+  let old;try{old=await getAuth().verifyIdToken(oldToken)}catch{throw new ApiError(401,'이전 게스트 세션이 만료됐습니다. 기존 브라우저에서 다시 로그인해 주세요.')}
+  if(old.firebase?.sign_in_provider!=='anonymous'||old.uid===uid)throw new ApiError(403,'게스트 계정의 퀴즈만 옮길 수 있습니다.');
+  const destination=await getAuth().getUser(uid);if(!destination.providerData.some(p=>p.providerId==='google.com'))throw new ApiError(403,'Google 로그인 후 퀴즈를 옮길 수 있습니다.');
+  const source=await db.collection('quizzes').where('ownerUid','==',old.uid).get();
+  for(let i=0;i<source.docs.length;i+=400){const batch=db.batch();source.docs.slice(i,i+400).forEach(doc=>batch.update(doc.ref,{ownerUid:uid}));await batch.commit()}
+  const previous=await db.collection('profiles').doc(old.uid).get(),current=await db.collection('profiles').doc(uid).get();if(previous.exists&&!current.exists)await db.collection('profiles').doc(uid).set(previous.data());
+  return {migrated:source.size};
+ }
  if(action==='decoys')return generateDecoys(db,uid,payload);
  if(action==='create'){
   const questions=payload.questions;check(Array.isArray(questions)&&questions.length===3&&questions.every(validQuestion)&&new Set(questions.map(q=>q.movie.id)).size===3,'서로 다른 영화 세 편의 문제를 완성해주세요.');
