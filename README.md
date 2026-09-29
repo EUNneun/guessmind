@@ -1,32 +1,29 @@
 # 게스마인드 (GuessMind)
 
-영화 세 편의 별점(0~10점, 반개 단위)과 진짜 한줄평을 맞히는 모바일 웹 퀴즈입니다. 기존 HTML 프로토타입의 화면을 유지하면서 Node.js 서버와 SQLite 저장소를 연결했습니다.
+영화 세 편의 별점(0~10점)과 진짜 한줄평을 맞히는 모바일 웹 퀴즈입니다. 자체 영화 목록은 `movies.json`에 있습니다. 카드를 선택하거나 넘기면서 문제를 만듭니다.
 
-## 실행
+## 실제 서비스 배포: Vercel + Firebase
 
-Node.js 24 이상이 필요합니다. `.env.example`의 값을 서버 환경변수로 설정하고 `npm start`를 실행한 뒤 `http://localhost:4173`으로 접속하세요. 외부 패키지는 필요하지 않습니다. DB는 실행 시 `data/guessmind.sqlite`에 생성됩니다.
+GitHub 저장소를 Vercel에 Import합니다. 프로젝트 루트는 저장소 최상위, 프레임워크는 Other(정적 HTML), Build Command는 비워둡니다. `index.html`과 정적 파일은 Vercel에서, `/api/gateway`는 Node.js Function으로 제공됩니다.
 
-| 변수 | 용도 |
-| --- | --- |
-| `PORT` | HTTP 포트, 기본 4173 |
-| `PUBLIC_ORIGIN` | 공유 링크의 공개 HTTPS 주소 |
-| `OPENAI_API_KEY` | 오답 생성 API 키 |
-| `OPENAI_MODEL` | Chat Completions 모델, 기본 `gpt-4o-mini` |
-| `KAKAO_JS_KEY` | 카카오 JavaScript 앱 키. 미설정 시 링크 복사/기기 공유 |
-| `NODE_ENV=production` | 세션 쿠키에 Secure 속성 적용 |
+Vercel Project Settings → Environment Variables에 다음을 **Production 및 Preview** 범위로 등록하고 재배포하세요.
 
-키는 서버 환경변수에만 둡니다. `.env` 파일은 Git에서 제외되며, 이 서버는 `.env`를 자동 로드하지 않으므로 배포 환경에 등록하거나 셸에서 주입하세요. 카카오 개발자 설정의 사이트 도메인에 `PUBLIC_ORIGIN`을 등록해야 공유 SDK가 작동합니다.
+| 이름 | 값 | 비밀 여부 |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | OpenAI API 키 | 비밀 |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | `guessmind-ed9a4` 프로젝트의 Firebase 서비스 계정 JSON 전체 | 비밀 |
+| `OPENAI_MODEL` | 생략 가능. 기본 `gpt-4o-mini` | 일반 |
 
-## 흐름과 데이터
+비밀값은 GitHub, 프론트 코드, 이슈, 채팅에 올리지 마세요. 서비스 계정에는 Firestore 읽기·쓰기 권한이 필요하며 키 파일은 로컬에만 보관하거나 삭제하세요. Firebase Authentication의 익명 제공업체와 Firestore를 활성화하세요. Firestore Console → Rules에 이 저장소의 `firestore.rules` 내용을 게시한 뒤 배포하세요. 클라이언트 직접 읽기·쓰기를 모두 막고 Vercel 함수만 Admin SDK로 접근합니다.
 
-`/api/session`이 닉네임 2~12자와 무작위 HttpOnly 쿠키를 발급합니다. `sessions`에는 토큰 해시만 저장합니다. `movies`는 자체 목록에서 선택한 영화 제목을 저장하고, `quizzes`, `questions`, `attempts`는 퀴즈와 결과를 보관합니다. 출제자는 서로 다른 영화 3편과 각 영화의 별점·한줄평·오답 4개를 저장합니다. `/quiz/{code}`의 공개 GET 응답에는 정답과 평점이 없고 선택지 순서만 섞어 보냅니다. 제출 시 서버가 평점 오차별 점수와 한줄평 점수를 합산해 100점으로 환산합니다. 같은 세션의 중복 응시는 거절합니다.
+브라우저는 Firebase 익명 인증으로 UID를 받고 닉네임을 등록합니다. 서버는 ID 토큰을 검증해 퀴즈·정답·참여 이력을 Firestore에 저장합니다. 공개 퀴즈 응답에는 실제 별점과 정답이 포함되지 않으며 서버가 채점합니다. UID당 퀴즈 중복 참여를 막고 AI 오답 생성은 UTC 날짜별 10회로 제한합니다. 쿠키나 앱 삭제 등으로 익명 UID가 바뀌면 같은 사람을 식별할 수 없습니다.
 
-영화 선택 화면은 `movies.json`의 제목 목록을 카드로 보여주며 선택 또는 넘기기를 지원합니다. 목록을 편집하면 카드 후보가 바뀝니다. 외부 포스터 이미지는 사용하지 않습니다. AI 오답은 서버에서 호출합니다. 운영 환경에서는 HTTPS·백업·요청 속도 제한·신고와 운영 기능을 추가하세요. 브라우저 쿠키를 삭제하거나 다른 기기를 쓰면 게스트 식별이 달라집니다. 닉네임은 계정 소유권을 증명하지 않습니다.
+카카오 공유는 `KAKAO_JS_KEY`가 설정되지 않아 기기 공유/링크 복사로 대체됩니다. 실제 카카오 SDK 공유는 별도 설정이 필요합니다. 포스터 이미지는 사용하지 않습니다.
 
-## 현재 범위
+## 화면 테스트판
 
-서버 저장, 검색, AI 오답, 퀴즈 링크, 서버 채점, 순위, 카카오 공유 연동 코드를 포함합니다. 외부 API 키와 배포 환경을 설정해야 실서비스에서 각 연동이 동작합니다. 카카오 키가 없으면 기기 공유 또는 링크 복사를 사용합니다.
+`docs/`는 [GitHub Pages 테스트판](https://eunneun.github.io/guessmind/)입니다. 예시 오답과 브라우저 저장만 사용하므로 다른 기기와 퀴즈 데이터가 동기화되지 않습니다. 실제 공유는 Vercel 배포 주소에서 확인합니다.
 
-## GitHub Pages 테스트판
+## 개발 메모
 
-`docs/`는 서버 연결 전 UI 테스트판입니다. 저장소 Settings → Pages → Build and deployment에서 Deploy from a branch, `main` / `/docs`를 선택하면 `https://eunneun.github.io/guessmind/`에서 열립니다. 브라우저 저장소만 사용하므로 출제 퀴즈는 다른 기기와 공유되지 않고 AI 오답은 예시입니다. 실제 데이터 공유와 AI 생성에는 Firebase Auth(익명), Firestore, Cloud Functions 및 서버 비밀키 설정이 필요합니다.
+`copy.js`는 일부 화면 문구와 과거 샘플 영화 데이터를 보존합니다. 실제 목록은 `movies.json`이 기준입니다. `server.mjs`의 SQLite 방식과 `firebase/` 아래 Cloud Functions 준비안은 Vercel 전환으로 제거했습니다.
