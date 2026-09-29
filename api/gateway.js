@@ -32,8 +32,9 @@ async function generateDecoys(db,uid,{title,review}){
  if(!process.env.OPENAI_API_KEY)throw new ApiError(503,'OpenAI 키 설정이 필요합니다.');
  const day=new Date().toISOString().slice(0,10),ref=db.collection('usage').doc(`${uid}_${day}`);
  await db.runTransaction(async tx=>{const s=await tx.get(ref);if((s.data()?.count||0)>=10)throw new ApiError(429,'오늘의 오답 생성 횟수를 모두 사용했습니다.');tx.set(ref,{count:FieldValue.increment(1),day},{merge:true})});
- const prompt=`영화: ${title}\n실제 한줄평: ${review}\n실제 문장과 겹치지 않는 오답 한줄평 4개를 JSON 문자열 배열로만 작성하세요. 각각 비슷한 문체의 다른 평가, 같은 관점의 다른 결론, 반대 평가, 다른 취향 관점으로 80자 이내.`;
- let response;try{response=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.OPENAI_MODEL||'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.9}),signal:AbortSignal.timeout(20000)})}catch{throw new ApiError(502,'오답 생성 서비스에 연결할 수 없습니다.')}
+ const prompt=`영화 제목: ${title}\n출제자가 작성한 정답 한줄평: ${review}`;
+ const instructions=`영화 퀴즈에 사용할 오답 한줄평 4개를 한국어로 작성하세요. 각 오답은 제시한 영화에 대한 감상평이어야 합니다. 정답의 내용·평가·표현을 그대로 옮기거나 바꿔 쓰지 마세요. 오답끼리는 평가 관점뿐 아니라 문체와 문장 리듬도 분명히 달라야 합니다. 예를 들어 짧고 단정적인 문장, 담담한 관찰, 감정이 드러나는 문장, 비유를 섞은 문장처럼 다양하게 구성하되 매번 자연스럽게 선택하세요. 영화의 구체적인 장면·대사·줄거리 등 확인할 수 없는 사실은 지어내지 말고 스포일러도 피하세요. 각 문장은 80자 이내의 자연스러운 한줄평이어야 합니다. 번호나 설명 없이 JSON 문자열 배열 하나만 반환하세요.`;
+ let response;try{response=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.OPENAI_MODEL||'gpt-4o-mini',messages:[{role:'system',content:instructions},{role:'user',content:prompt}],temperature:0.9}),signal:AbortSignal.timeout(20000)})}catch{throw new ApiError(502,'오답 생성 서비스에 연결할 수 없습니다.')}
  if(!response.ok)throw new ApiError(502,'오답 생성에 실패했습니다.');const data=await response.json();let decoys;try{decoys=JSON.parse(data.choices[0].message.content.replace(/^```(?:json)?\s*|\s*```$/g,''))}catch{throw new ApiError(502,'오답을 다시 생성해주세요.')}
  check(Array.isArray(decoys)&&decoys.length===4&&decoys.every(x=>typeof x==='string'&&!!x.trim()&&x.length<=80&&x.trim()!==review.trim())&&new Set(decoys.map(x=>x.trim())).size===4,'오답을 다시 생성해주세요.');return {decoys};
 }
