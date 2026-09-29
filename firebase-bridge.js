@@ -1,6 +1,6 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
 import {getAuth,signInAnonymously,onAuthStateChanged,GoogleAuthProvider,linkWithPopup,signInWithPopup,signOut} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
-const config={apiKey:'AIzaSyCp6A_cd0dBUw1sOQg3kbWXFPVzBxaOKXs',authDomain:'guessmind-ed9a4.firebaseapp.com',projectId:'guessmind-ed9a4',storageBucket:'guessmind-ed9a4.firebasestorage.app',messagingSenderId:'197789294992',appId:'1:197789294992:web:ba32046c0d50ec9c9ed315'};
+const config={apiKey:'AIzaSyCp6A_cd0dBUw1sOQg3kbWXFPVzBxaOKXs',authDomain:'guessmind.eunlab.com',projectId:'guessmind-ed9a4',storageBucket:'guessmind-ed9a4.firebasestorage.app',messagingSenderId:'197789294992',appId:'1:197789294992:web:ba32046c0d50ec9c9ed315'};
 try{
  const auth=getAuth(initializeApp(config));
  await new Promise((resolve,reject)=>{const unsub=onAuthStateChanged(auth,user=>{unsub();user?resolve(user):signInAnonymously(auth).then(resolve,reject)},reject)});
