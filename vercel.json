@@ -1,4 +1,14 @@
 {
   "version": 2,
-  "functions": {"api/gateway.js": {"maxDuration": 30}}
+  "functions": {
+    "api/gateway.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://guessmind-ed9a4.firebaseapp.com/__/auth/:path*"
+    }
+  ]
 }
