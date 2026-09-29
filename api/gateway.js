@@ -56,6 +56,7 @@ async function dispatch(db,uid,action,payload,origin){
   return {code,owner:q.owner,questions:q.questions.map(item=>({movie:item.movie,rating:item.rating,review:item.review,decoys:item.decoys})),attempts};
  }
 
+ if(action==='profile'){const profile=await db.collection('profiles').doc(uid).get();return {nickname:profile.data()?.nickname||null}}
  if(action==='session'){const name=nick(payload.nickname);check(!!name,'닉네임은 2~12자로 입력해주세요.');await db.collection('profiles').doc(uid).set({nickname:name,updatedAt:FieldValue.serverTimestamp()},{merge:true});return {nickname:name}}
  if(action==='mergeAnonymous'){
   const oldToken=payload.oldToken;check(typeof oldToken==='string'&&oldToken.length<5000,'이전 게스트 인증 정보가 없습니다.');
