@@ -5,6 +5,7 @@ import { randomBytes, createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 
 const port=Number(process.env.PORT||4173), origin=process.env.PUBLIC_ORIGIN||`http://localhost:${port}`;
+const movieCatalog=JSON.parse(await readFile(new URL('./movies.json',import.meta.url),'utf8')).map((title,index)=>({id:index+1,title}));
 await mkdir('data',{recursive:true});
 const db=new DatabaseSync('data/guessmind.sqlite');
 db.exec(`PRAGMA journal_mode=WAL;
@@ -34,13 +35,7 @@ async function api(req,res,url){
   res.setHeader('Set-Cookie',`gm_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${process.env.NODE_ENV==='production'?'; Secure':''}`);
   return json(res,200,{nickname:name});
  }
- if(path==='/api/movies'&&method==='GET'){
-  const query=(url.searchParams.get('q')||'').trim();if(query.length<2||query.length>80)throw fail(400,'영화 제목을 두 글자 이상 입력해주세요.');
-  if(!process.env.TMDB_TOKEN)throw fail(503,'TMDB_TOKEN 설정이 필요합니다.');
-  const u=new URL('https://api.themoviedb.org/3/search/movie');u.searchParams.set('query',query);u.searchParams.set('language','ko-KR');u.searchParams.set('include_adult','false');
-  const response=await fetch(u,{headers:{Authorization:`Bearer ${process.env.TMDB_TOKEN}`},signal:AbortSignal.timeout(8000)});if(!response.ok)throw fail(502,'영화 검색에 실패했습니다.');
-  const data=await response.json();return json(res,200,{movies:(data.results||[]).slice(0,12).map(m=>({id:m.id,title:m.title,original_title:m.original_title,poster_path:m.poster_path,year:m.release_date?.slice(0,4)||'',genre_ids:m.genre_ids||[]}))});
- }
+ if(path==='/api/movies'&&method==='GET')return json(res,200,{movies:movieCatalog});
  if(path==='/api/decoys'&&method==='POST'){
   requireSession(req);const {title,review}=await body(req);
   if(typeof title!=='string'||typeof review!=='string'||!review.trim()||review.length>200)throw fail(400,'영화와 한줄평을 확인해주세요.');
@@ -55,7 +50,7 @@ async function api(req,res,url){
  if(path==='/api/quizzes'&&method==='POST'){
   const owner=requireSession(req),{questions}=await body(req);
   if(!Array.isArray(questions)||questions.length!==3||new Set(questions.map(q=>q.movie?.id)).size!==3)throw fail(400,'서로 다른 영화 3편을 등록해주세요.');
-  for(const q of questions)if(!Number.isInteger(q.movie?.id)||!q.movie.title||!Number.isInteger(q.rating)||q.rating<0||q.rating>10||typeof q.review!=='string'||!q.review.trim()||q.review.length>80||!Array.isArray(q.decoys)||q.decoys.length!==4||q.decoys.some(d=>typeof d!=='string'||!d.trim()||d.length>80||d.trim()===q.review.trim())||new Set(q.decoys.map(d=>d.trim())).size!==4)throw fail(400,'문제 내용을 확인해주세요.');
+  for(const q of questions)if(!Number.isInteger(q.movie?.id)||movieCatalog.find(m=>m.id===q.movie.id)?.title!==q.movie.title||!Number.isInteger(q.rating)||q.rating<0||q.rating>10||typeof q.review!=='string'||!q.review.trim()||q.review.length>80||!Array.isArray(q.decoys)||q.decoys.length!==4||q.decoys.some(d=>typeof d!=='string'||!d.trim()||d.length>80||d.trim()===q.review.trim())||new Set(q.decoys.map(d=>d.trim())).size!==4)throw fail(400,'문제 내용을 확인해주세요.');
   const code=randomBytes(9).toString('base64url');db.exec('BEGIN');try{
    db.prepare('INSERT INTO quizzes(code,owner_session,owner_name) VALUES(?,?,?)').run(code,owner.id,owner.nickname);
    for(let i=0;i<3;i++){const q=questions[i],m=q.movie;db.prepare('INSERT INTO movies(id,title,original_title,poster_path,year,genres) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,original_title=excluded.original_title,poster_path=excluded.poster_path,year=excluded.year,genres=excluded.genres').run(m.id,m.title,m.original_title||'',m.poster_path||'',m.year||'',JSON.stringify(m.genre_ids||[]));db.prepare('INSERT INTO questions(code,position,movie_id,rating,review,decoys) VALUES(?,?,?,?,?,?)').run(code,i,m.id,q.rating,q.review.trim(),JSON.stringify(q.decoys.map(d=>d.trim())))}db.exec('COMMIT')
