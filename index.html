@@ -33,6 +33,7 @@
     .movie-picker{margin-top:22px;min-height:225px;border-radius:20px;border:1px solid #dedee8;background:linear-gradient(145deg,#f5f5ff,#ececf5);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}.picker-card h2{font-size:28px;letter-spacing:-.05em;margin:12px 0}.picker-card p{font-size:13px;color:var(--muted)}.picker-kicker{font-size:12px;font-weight:850;color:var(--brand)}.picker-actions{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:8px;margin-top:12px}.picker-actions button{font-size:14px;padding:0 6px}.selected-movie{margin-top:18px;font-weight:850;color:var(--brand)}
     .is-loading{display:flex;align-items:center;justify-content:center;gap:10px;cursor:progress}.loading-spinner{display:inline-block;flex:none;width:19px;height:19px;border:3px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}button:disabled{cursor:not-allowed}.generation-status{margin:12px 0 0;color:var(--brand);font-size:14px;font-weight:750;text-align:center}
     .header-actions{display:flex;align-items:center;gap:6px}.header-actions .nav-toggle{padding:9px 8px}.owned-card{padding:18px;border:1px solid #dedee8;border-radius:15px;background:#fff;margin-top:12px}.owned-card h2{font-size:17px;margin:0 0 8px;line-height:1.4}.owned-card p{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5}.owned-card .row{display:flex;gap:8px}.owned-card .row button{flex:1;min-height:42px;font-size:14px;border-radius:10px}.list-empty{padding:24px 15px;margin-top:24px;border:1px solid var(--line);border-radius:15px;color:var(--muted);text-align:center;line-height:1.6}
+    .auth-card{margin-top:20px;padding:16px;border:1px solid #dedee8;border-radius:15px;background:#fafaff}.auth-status{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.5}.google-auth-button,.google-signout-button{min-height:44px;width:100%;border:1px solid #dedee8;border-radius:10px;background:#fff;color:var(--ink);font-weight:800;font-size:14px}.google-auth-button:disabled{opacity:.65}.google-signout-button{background:transparent}
     @media(min-width:700px){body{padding:24px}.app{min-height:calc(100vh - 48px);border-radius:24px}.sticky{border-radius:0 0 24px 24px}}
   </style>
 </head>
@@ -87,6 +88,7 @@
 
     <section id="login" class="screen">
       <div class="eyebrow">내 퀴즈 만들기</div><h1 class="title">닉네임만 정하면<br>바로 시작할 수 있어요</h1><p class="sub">로그인 없이 영화 세 편으로 나만의 퀴즈를 만들어요.</p>
+      <div class="auth-card"><p class="auth-status googleAuthStatus">게스트로 이용 중이에요. Google 계정을 연결하면 다른 기기에서도 내 문제를 볼 수 있어요.</p><button class="google-auth-button googleAuthButton" type="button" onclick="connectGoogle(this)">Google 계정 연결하기</button><button class="google-signout-button googleSignOutButton" type="button" onclick="disconnectGoogle()" hidden>로그아웃</button></div>
       <div class="login-card"><label class="form-label" for="nickname" style="margin-top:0">닉네임</label><input id="nickname" class="field" maxlength="12" placeholder="2~12자로 입력해주세요" autocomplete="nickname"><div class="meta" style="margin-top:12px">퀴즈 화면과 결과 순위에 표시돼요.</div></div>
       <div class="actions"><button class="primary" onclick="startAsGuest()">닉네임으로 시작하기</button><button class="secondary" onclick="openMyQuizzes()">내가 만든 문제 보기</button><button class="tiny-link" onclick="show('home')">다음에 할게요</button></div>
       <p class="note">완성한 퀴즈는 카카오톡으로 공유할 수 있어요.</p>
@@ -94,6 +96,7 @@
 
     <section id="myQuizzes" class="screen">
       <div class="eyebrow">내 문제</div><h1 class="title">내가 만든<br>영화 퀴즈</h1><p class="sub">이 브라우저의 게스트 ID로 저장한 퀴즈예요.</p>
+      <div class="auth-card"><p class="auth-status googleAuthStatus">게스트로 이용 중이에요. Google 계정을 연결하면 다른 기기에서도 내 문제를 볼 수 있어요.</p><button class="google-auth-button googleAuthButton" type="button" onclick="connectGoogle(this)">Google 계정 연결하기</button><button class="google-signout-button googleSignOutButton" type="button" onclick="disconnectGoogle()" hidden>로그아웃</button></div>
       <div id="myQuizList" aria-live="polite"></div>
       <div class="actions"><button class="primary" onclick="show('login')">새 문제 만들기</button></div>
     </section>
