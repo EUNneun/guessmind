@@ -26,3 +26,7 @@ Node.js 24 이상이 필요합니다. `.env.example`의 값을 서버 환경변�
 ## 현재 범위
 
 서버 저장, 검색, AI 오답, 퀴즈 링크, 서버 채점, 순위, 카카오 공유 연동 코드를 포함합니다. 외부 API 키와 배포 환경을 설정해야 실서비스에서 각 연동이 동작합니다. 카카오 키가 없으면 기기 공유 또는 링크 복사를 사용합니다.
+
+## GitHub Pages 테스트판
+
+`docs/`는 서버 연결 전 UI 테스트판입니다. 저장소 Settings → Pages → Build and deployment에서 Deploy from a branch, `main` / `/docs`를 선택하면 `https://eunneun.github.io/guessmind/`에서 열립니다. 브라우저 저장소만 사용하므로 출제 퀴즈는 다른 기기와 공유되지 않고 AI 오답은 예시입니다. 실제 데이터 공유와 AI 생성에는 Firebase Auth(익명), Firestore, Cloud Functions 및 서버 비밀키 설정이 필요합니다.
