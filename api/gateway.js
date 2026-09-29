@@ -48,6 +48,13 @@ async function generateDecoys(db,uid,{title,review}){
 async function dispatch(db,uid,action,payload,origin){
  if(action==='movies')return {movies:catalog};
  if(action==='myQuizzes'){const snap=await db.collection('quizzes').where('ownerUid','==',uid).get();const quizzes=snap.docs.map(doc=>{const q=doc.data();return {code:doc.id,owner:q.owner,movies:q.questions.map(item=>item.movie.title),createdAt:q.createdAt?.toDate?.().toISOString()||null,createdAtSeconds:q.createdAt?.seconds||0}}).sort((a,b)=>b.createdAtSeconds-a.createdAtSeconds).map(({createdAtSeconds,...item})=>item);return {quizzes}}
+ if(action==='ownerResult'){
+  const {code}=payload,q=await quiz(db,code);
+  if(q.ownerUid!==uid)throw new ApiError(403,'이 퀴즈의 출제자만 결과를 볼 수 있습니다.');
+  const snap=await db.collection('quizzes').doc(code).collection('attempts').orderBy('score','desc').limit(100).get();
+  const attempts=snap.docs.map(doc=>{const a=doc.data();return {nickname:a.nickname,score:a.score,title:a.title,createdAt:a.createdAt?.toDate?.().toISOString()||null,details:Array.isArray(a.details)?a.details:null}});
+  return {code,owner:q.owner,questions:q.questions.map(item=>({movie:item.movie,rating:item.rating,review:item.review,decoys:item.decoys})),attempts};
+ }
 
  if(action==='session'){const name=nick(payload.nickname);check(!!name,'닉네임은 2~12자로 입력해주세요.');await db.collection('profiles').doc(uid).set({nickname:name,updatedAt:FieldValue.serverTimestamp()},{merge:true});return {nickname:name}}
  if(action==='mergeAnonymous'){
@@ -70,8 +77,8 @@ async function dispatch(db,uid,action,payload,origin){
  if(action==='ranking'){await quiz(db,payload.code);return {ranking:await ranking(db,payload.code)}}
  if(action==='attempt'){
   const {code,answers}=payload,q=await quiz(db,code);check(Array.isArray(answers)&&answers.length===3,'세 문제를 모두 풀어주세요.');const profile=await db.collection('profiles').doc(uid).get(),name=profile.data()?.nickname;check(!!name,'닉네임을 입력해주세요.');
-  let total=0;const details=q.questions.map((item,i)=>{const answer=answers[i];check(Number.isInteger(answer?.rating)&&answer.rating>=0&&answer.rating<=10&&typeof answer.choiceId==='string','답안을 확인해주세요.');const valid=[item.review,...item.decoys].map(t=>digest(code+i+t));check(valid.includes(answer.choiceId),'선택지를 확인해주세요.');const ratingPoints=points(item.rating,answer.rating),reviewPoints=answer.choiceId===valid[0]?100:0;total+=ratingPoints+reviewPoints;return {ratingPoints,reviewPoints}});
-  const score=Math.round(total/6),title=titleFor(score),ref=db.collection('quizzes').doc(code).collection('attempts').doc(uid);try{await ref.create({nickname:name,score,title,createdAt:FieldValue.serverTimestamp()})}catch(e){if(e.code===6||e.code==='already-exists')throw new ApiError(409,'이미 참여한 퀴즈입니다.');throw e}return {score,title,details,nickname:name,ranking:await ranking(db,code)};
+  let total=0;const details=q.questions.map((item,i)=>{const answer=answers[i];check(Number.isInteger(answer?.rating)&&answer.rating>=0&&answer.rating<=10&&typeof answer.choiceId==='string','답안을 확인해주세요.');const valid=[item.review,...item.decoys].map(t=>digest(code+i+t));check(valid.includes(answer.choiceId),'선택지를 확인해주세요.');const ratingPoints=points(item.rating,answer.rating),reviewPoints=answer.choiceId===valid[0]?100:0;total+=ratingPoints+reviewPoints;return {rating:answer.rating,review:answer.choiceId===valid[0]?item.review:[item.review,...item.decoys][valid.indexOf(answer.choiceId)],ratingPoints,reviewPoints}});
+  const score=Math.round(total/6),title=titleFor(score),ref=db.collection('quizzes').doc(code).collection('attempts').doc(uid);try{await ref.create({nickname:name,score,title,details,createdAt:FieldValue.serverTimestamp()})}catch(e){if(e.code===6||e.code==='already-exists')throw new ApiError(409,'이미 참여한 퀴즈입니다.');throw e}return {score,title,details:details.map(({ratingPoints,reviewPoints})=>({ratingPoints,reviewPoints})),nickname:name,ranking:await ranking(db,code)};
  }
  throw new ApiError(404,'요청을 찾을 수 없습니다.');
 }
