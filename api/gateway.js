@@ -47,6 +47,8 @@ async function generateDecoys(db,uid,{title,review}){
 }
 async function dispatch(db,uid,action,payload,origin){
  if(action==='movies')return {movies:catalog};
+ if(action==='myQuizzes'){const snap=await db.collection('quizzes').where('ownerUid','==',uid).get();const quizzes=snap.docs.map(doc=>{const q=doc.data();return {code:doc.id,owner:q.owner,movies:q.questions.map(item=>item.movie.title),createdAt:q.createdAt?.toDate?.().toISOString()||null,createdAtSeconds:q.createdAt?.seconds||0}}).sort((a,b)=>b.createdAtSeconds-a.createdAtSeconds).map(({createdAtSeconds,...item})=>item);return {quizzes}}
+
  if(action==='session'){const name=nick(payload.nickname);check(!!name,'닉네임은 2~12자로 입력해주세요.');await db.collection('profiles').doc(uid).set({nickname:name,updatedAt:FieldValue.serverTimestamp()},{merge:true});return {nickname:name}}
  if(action==='decoys')return generateDecoys(db,uid,payload);
  if(action==='create'){
