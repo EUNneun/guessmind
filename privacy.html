@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index,follow">
+  <title>개인정보처리방침 | 게스마인드</title>
+  <style>
+    :root{color-scheme:light;font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:#17172c;background:#f3f4f8}
+    *{box-sizing:border-box}body{margin:0}header,main{max-width:720px;margin:auto;background:#fff}header{padding:22px 24px;border-bottom:1px solid #e6e6ee}header a{color:#2926c7;text-decoration:none;font-weight:800}main{min-height:calc(100vh - 69px);padding:32px 24px 70px}h1{font-size:30px;letter-spacing:-.04em;margin:0 0 10px}h2{font-size:19px;margin:32px 0 10px}p,li{line-height:1.75;color:#424257}ul{padding-left:21px}a{color:#2926c7}.date{color:#737383;font-size:14px}
+  </style>
+</head>
+<body>
+  <header><a href="/">← 게스마인드</a></header>
+  <main>
+    <h1>개인정보처리방침</h1>
+    <p class="date">시행일: 2026년 9월 29일</p>
+    <p>게스마인드는 영화 취향 퀴즈의 제작, 참여, 계정 연결을 위해 아래 정보를 처리합니다.</p>
+
+    <h2>1. 처리하는 정보와 목적</h2>
+    <ul>
+      <li>게스트 이용 시: Firebase에서 발급하는 익명 사용자 식별자. 퀴즈 제작자와 참여자를 구분하고 본인 기록을 연결하는 데 사용합니다.</li>
+      <li>Google 계정 연결 시: Firebase Authentication의 사용자 식별자, Google 계정의 이메일 주소와 계정 프로필 정보가 인증 과정에서 처리될 수 있습니다. 앱은 이메일 주소를 로그인 상태 표시와 계정 연결에 사용합니다.</li>
+      <li>닉네임: 퀴즈 출제자 표시와 도전자 순위 표시, 본인 기록 확인에 사용합니다.</li>
+      <li>퀴즈 제작 정보: 선택한 영화, 평점, 직접 쓴 한줄평, 생성·수정한 오답, 제작 시각을 저장하여 공유 퀴즈를 제공합니다.</li>
+      <li>퀴즈 참여 정보: 답안, 점수, 호칭, 참여 시각을 처리하여 점수를 계산하고 중복 참여를 제한하며 순위에 표시합니다. 답안은 점수 계산에 사용하며, 저장되는 참여 기록에는 닉네임·점수·호칭·참여 시각이 포함됩니다.</li>
+      <li>오답 생성 사용량: 사용자 식별자에 연결된 일별 및 문제별 생성 횟수를 저장하여 사용 횟수를 제한합니다.</li>
+    </ul>
+
+    <h2>2. 외부 서비스 이용과 공개 범위</h2>
+    <ul>
+      <li>Google Firebase Authentication과 Cloud Firestore를 로그인 및 데이터 저장에, Vercel을 웹사이트와 서버 기능 제공에 사용합니다.</li>
+      <li>AI 오답을 생성할 때 영화 제목과 직접 쓴 한줄평을 OpenAI API로 전송합니다. 이 요청에 Google 계정 이메일 주소는 포함하지 않습니다.</li>
+      <li>공유 링크에 접속한 사람은 출제자의 닉네임, 영화와 보기 문장으로 구성된 퀴즈를 볼 수 있습니다. 순위에는 참여자의 닉네임, 점수, 호칭이 표시됩니다.</li>
+      <li>사용자가 카카오톡 공유 기능을 실행하면 공유할 퀴즈 링크나 결과 점수·호칭이 카카오톡 공유 기능으로 전달될 수 있습니다. 공유 결과에는 정답과 오답을 넣지 않습니다.</li>
+    </ul>
+
+    <h2>3. 보관 및 삭제</h2>
+    <p>퀴즈와 참여 기록은 서비스 제공을 위해 저장됩니다. 현재 앱에는 계정 및 기록을 직접 삭제하는 화면이 마련되어 있지 않습니다. 삭제 요청은 아래 문의 경로로 접수해 주시면 해당 기록을 확인하고 처리 방법을 안내합니다. 브라우저의 데이터를 삭제하거나 로그아웃하는 것만으로 서버에 저장된 기록이 삭제되지는 않습니다.</p>
+
+    <h2>4. 이용자 선택과 문의</h2>
+    <p>Google 계정 연결 없이 게스트로 퀴즈를 만들거나 풀 수 있습니다. Google 계정 연결은 다른 기기에서 본인이 만든 퀴즈를 확인하기 위한 선택 기능입니다. 개인정보 열람·삭제 또는 서비스 문의는 <a href="https://github.com/EUNneun/guessmind/issues/new" rel="noopener noreferrer">게스마인드 문의 페이지</a>를 이용해 주세요. GitHub 문의 글은 공개될 수 있으므로 이메일 주소나 인증 정보 등 개인정보를 글에 적지 마세요.</p>
+    <p>이 방침을 변경하는 경우 이 페이지에 시행일과 변경 내용을 반영합니다.</p>
+  </main>
+</body>
+</html>
