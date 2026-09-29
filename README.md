@@ -1,5 +1,7 @@
 # 게스마인드 (GuessMind)
 
+실서비스 주소: https://guessmind-sigma.vercel.app/
+
 영화 세 편의 별점(0~10점)과 진짜 한줄평을 맞히는 모바일 웹 퀴즈입니다. 자체 영화 목록은 `movies.json`에 있습니다. 카드를 선택하거나 넘기면서 문제를 만듭니다.
 
 ## 실제 서비스 배포: Vercel + Firebase
