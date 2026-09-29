@@ -9,7 +9,8 @@ let database;
 function services(){
  if(!database){
   if(!process.env.FIREBASE_SERVICE_ACCOUNT_JSON)throw new ApiError(503,'Firebase 서버 인증 정보가 설정되지 않았습니다.');
-  if(!getApps().length){let key;try{key=JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)}catch{throw new ApiError(503,'Firebase 서버 인증 정보 형식이 올바르지 않습니다.')}
+  if(!getApps().length){let key;try{key=JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON.trim().replace(/^\uFEFF/,''));if(typeof key==='string')key=JSON.parse(key)}catch{throw new ApiError(503,'Firebase 서버 인증 정보가 JSON 형식이 아닙니다.')}
+   if(key?.type!=='service_account'||!key?.private_key||!key?.client_email)throw new ApiError(503,'Firebase 웹 앱 설정이 아닌 서비스 계정 JSON 파일이 필요합니다.');
    initializeApp({credential:cert(key)});
   }
   database=getFirestore();
